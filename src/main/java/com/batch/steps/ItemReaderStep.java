@@ -53,6 +53,11 @@ public class ItemReaderStep implements Tasklet {
         reader.close();
         log.info("-----------------> END OF READING STEP <-----------------");
 
+        chunkContext.getStepContext()
+                .getStepExecution()
+                .getJobExecution()
+                .getExecutionContext()
+                .put("personList", personList);
         return RepeatStatus.FINISHED;
     }
 }
