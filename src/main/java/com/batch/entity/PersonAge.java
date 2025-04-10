@@ -3,22 +3,19 @@ package com.batch.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 
-@Entity
 @Data
-@Table(name = "persons")
-public class Person {
-
+@Entity
+@Table(name = "persons_age")
+public class PersonAge {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "persons_id")
-    private Long personsId;
-
+    @Column(name = "persons_age_id")
+    private int personsAgeId;
     @Column(name = "name")
     private String name;
-
     @Column(name = "last_name")
     private String lastName;
+    @Column(name = "age")
+    private int age;
 
-    @Column(name = "birthday")
-    private String birthday;
 }
