@@ -1,11 +1,13 @@
 package com.batch.config;
 
-import com.batch.entity.Person;
-import com.batch.entity.PersonAge;
-import lombok.extern.slf4j.Slf4j;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.format.DateTimeFormatter;
+
+import javax.sql.DataSource;
+
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
@@ -20,10 +22,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import javax.sql.DataSource;
-import java.time.LocalDate;
-import java.time.Period;
-import java.time.format.DateTimeFormatter;
+import com.batch.entity.Person;
+import com.batch.entity.PersonAge;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Configuration
 @Slf4j
@@ -32,7 +34,6 @@ public class BatchConfigurationSimple {
     @Autowired
     private DataSource dataSource;
 
-    // Reader: Leer registros de la tabla "persons"
     @Bean
     public JdbcCursorItemReader<Person> reader() {
         return new JdbcCursorItemReaderBuilder<Person>()
@@ -43,7 +44,6 @@ public class BatchConfigurationSimple {
                 .build();
     }
 
-    // Processor: Procesar registros para calcular la edad
     @Bean
     public ItemProcessor<Person, PersonAge> processor() {
         return person -> {
@@ -61,7 +61,6 @@ public class BatchConfigurationSimple {
         return Period.between(birthDate, LocalDate.now()).getYears();
     }
 
-    // Writer: Escribir registros en la tabla "persons_age"
     @Bean
     public JdbcBatchItemWriter<PersonAge> writer() {
         return new JdbcBatchItemWriterBuilder<PersonAge>()
@@ -72,21 +71,19 @@ public class BatchConfigurationSimple {
     }
 
 
-    // Step: Define el proceso de lectura, procesamiento y escritura
     @Bean
     public Step step(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
         return new StepBuilder("step", jobRepository)
-                .<Person, PersonAge>chunk(10, transactionManager) // Procesa de 10 en 10 registros
+                .<Person, PersonAge>chunk(10, transactionManager)
                 .reader(reader())
                 .processor(processor())
                 .writer(writer())
                 .build();
     }
 
-    // Job: Configura el job completo
-    @Bean
-    public Job job(JobRepository jobRepository, Step step) {
-        return new JobBuilder("job", jobRepository)
+    @Bean(name = "jobSimple")
+    public Job jobSimple(JobRepository jobRepository, Step step) {
+        return new JobBuilder("jobSimple", jobRepository)
                 .start(step)
                 .build();
     }

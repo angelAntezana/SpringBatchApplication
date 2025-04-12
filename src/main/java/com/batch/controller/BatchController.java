@@ -1,14 +1,5 @@
 package com.batch.controller;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
@@ -18,13 +9,10 @@ import org.springframework.batch.core.repository.JobExecutionAlreadyRunningExcep
 import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
 import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -37,45 +25,21 @@ public class BatchController {
     private JobLauncher jobLauncher;
 
     @Autowired
-    private Job job;
+    @Qualifier("jobSimple")
+    private Job jobSimple;
 
-    @PostMapping("/uploadFile")
-    public ResponseEntity<?> receiveFile(@RequestParam(name = "file") MultipartFile multipartFile) {
+    @Autowired
+    @Qualifier("jobChunk")
+    private Job jobChunk;
 
-        String fileName = multipartFile.getOriginalFilename();
-        try{
-            Path path = Paths.get("src" + File.separator + "main" + File.separator + "resources" + File.separator + "files" + File.separator + fileName);
-
-            Files.createDirectories(path.getParent());
-            Files.copy(multipartFile.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-
-            File archivo = path.toAbsolutePath().toFile();
-
-            JobParameters jobParameters = new JobParametersBuilder()
-                    .addString("nombre",fileName)
-                    .addDate("fecha", new Date())
-                    .toJobParameters();
-
-            jobLauncher.run(job, jobParameters);
-
-            Map<String, String> response = new HashMap<>();
-            response.put("archivo", fileName);
-
-            return ResponseEntity.ok(response);
-
-        }catch(Exception exception){
-            log.error("Error al iniciar el proceso batch. Error {}", exception.getMessage(), exception);
-            return null;
-        }
-    }
-
+    
     @GetMapping("/persons_age/generate")
     public void generatePersonsAge() {
         JobParameters jobParameters = new JobParametersBuilder()
                 .addLong("startAt", System.currentTimeMillis())
                 .toJobParameters();
         try {
-            jobLauncher.run(job, jobParameters);
+            jobLauncher.run(jobSimple, jobParameters);
         } catch (
                 JobExecutionAlreadyRunningException | JobRestartException |
                 JobInstanceAlreadyCompleteException | JobParametersInvalidException e) {
@@ -83,4 +47,49 @@ public class BatchController {
             log.error("Error al iniciar el proceso batch. Error {}", e.getMessage(), e);
         }
     }
+
+    @GetMapping("/chunk")
+    public void chunk() {
+        JobParameters jobParameters = new JobParametersBuilder()
+                .addLong("chunk", System.currentTimeMillis())
+                .toJobParameters();
+        try {
+            jobLauncher.run(jobChunk, jobParameters);
+        } catch (
+                JobExecutionAlreadyRunningException | JobRestartException |
+                JobInstanceAlreadyCompleteException | JobParametersInvalidException e) {
+            System.out.println(e.getMessage());
+            log.error("Error al iniciar el proceso batch CHUNK. Error {}", e.getMessage(), e);
+        }
+    }
+
+    // @PostMapping("/uploadFile")
+    // public ResponseEntity<?> receiveFile(@RequestParam(name = "file") MultipartFile multipartFile) {
+
+    //     String fileName = multipartFile.getOriginalFilename();
+    //     try{
+    //         Path path = Paths.get("src" + File.separator + "main" + File.separator + "resources" + File.separator + "files" + File.separator + fileName);
+
+    //         Files.createDirectories(path.getParent());
+    //         Files.copy(multipartFile.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+
+    //         File archivo = path.toAbsolutePath().toFile();
+
+    //         JobParameters jobParameters = new JobParametersBuilder()
+    //                 .addString("nombre",fileName)
+    //                 .addDate("fecha", new Date())
+    //                 .toJobParameters();
+
+    //         jobLauncher.run(job, jobParameters);
+
+    //         Map<String, String> response = new HashMap<>();
+    //         response.put("archivo", fileName);
+
+    //         return ResponseEntity.ok(response);
+
+    //     }catch(Exception exception){
+    //         log.error("Error al iniciar el proceso batch. Error {}", exception.getMessage(), exception);
+    //         return null;
+    //     }
+    // }
 }
