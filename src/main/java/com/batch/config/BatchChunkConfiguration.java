@@ -13,14 +13,14 @@ import org.springframework.transaction.PlatformTransactionManager;
 import com.batch.entity.Person;
 import com.batch.entity.PersonAge;
 import com.batch.steps.chunk.ItemChunkProcessor;
-import com.batch.steps.chunk.ItemChunkReader;
 import com.batch.steps.chunk.ItemChunkWriter;
+import com.batch.steps.chunk.impl.ItemReaderServiceImpl;
 
 @Configuration
 public class BatchChunkConfiguration {
     
     @Autowired
-    private ItemChunkReader itemChunkReader;
+    private ItemReaderServiceImpl itemReaderServiceImpl;
     @Autowired
     private ItemChunkProcessor itemChunkProcessor;
     @Autowired
@@ -32,7 +32,7 @@ public class BatchChunkConfiguration {
 
         return new StepBuilder("processPersons", jobRepository)
         .<Person, PersonAge> chunk(10, transactionManager)
-        .reader(itemChunkReader)
+        .reader(itemReaderServiceImpl)
         .processor(itemChunkProcessor)
         .writer(itemChunkWriter)
         .build();
